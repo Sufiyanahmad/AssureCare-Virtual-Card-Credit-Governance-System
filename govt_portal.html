@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>NHAS Govt Admin &amp; Treasury Command Portal</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="topbar">
+      <div>
+        <strong style="font-size: 17px"
+          >NATIONAL HEALTH ASSURANCE SCHEME (NHAS)</strong
+        ><br />
+        <small style="opacity: 0.85"
+          >AssureCare Virtual Card &amp; Role-Based Immutable Governance
+          System</small
+        >
+      </div>
+      <div style="text-align: right; font-size: 12px">
+        <strong>Aman Kishore</strong> (Enroll: 910/25)<br />
+        Supervisor: Dr. Rajshree | BBAU Lucknow
+      </div>
+    </div>
+    <div class="navbar">
+      <a href="govt_portal.html" class="active">Govt Admin & Treasury</a>
+    </div>
+
+    <div class="wrap">
+      <div id="msgBox" class="msg-banner"></div>
+
+      <div class="card toolbar">
+        <div>
+          <label style="margin-top: 0">From Year</label
+          ><input type="number" id="fFrom" value="2026" style="width: 105px" />
+        </div>
+        <div>
+          <label style="margin-top: 0">To Year</label
+          ><input type="number" id="fTo" value="2027" style="width: 105px" />
+        </div>
+        <div>
+          <label style="margin-top: 0">Sort Order</label>
+          <select id="fSort" style="width: 135px">
+            <option value="DESC">Descending</option>
+            <option value="ASC">Ascending</option>
+          </select>
+        </div>
+        <button class="btn" style="margin-top: 16px" onclick="loadAdmin()">
+          Filter &amp; Sort
+        </button>
+        <button
+          class="btn btn-teal"
+          style="margin-top: 16px"
+          onclick="exportCSV()"
+        >
+          Export Govt Statement (CSV)
+        </button>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi-card" style="border-color: var(--teal)">
+          <div>0% Interest Base Disbursed</div>
+          <h3 id="kpiZero">Rs. 0</h3>
+        </div>
+        <div class="kpi-card" style="border-color: var(--amber)">
+          <div>With-Interest Disbursed</div>
+          <h3 id="kpiWithInt">Rs. 0</h3>
+        </div>
+        <div class="kpi-card" style="border-color: var(--success)">
+          <div>Total Recovered</div>
+          <h3 id="kpiRec">Rs. 0</h3>
+        </div>
+        <div class="kpi-card" style="border-color: var(--danger)">
+          <div>Pending Recovery</div>
+          <h3 id="kpiPend">Rs. 0</h3>
+        </div>
+        <div class="kpi-card" style="border-color: var(--navy)">
+          <div>Net Govt Investment (No 2x Count)</div>
+          <h3 id="kpiNet">Rs. 0</h3>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-top: 0">
+          Beneficiary Master Directory (Read-Only Data | Single &amp; Bulk
+          Governance)
+        </h3>
+        <div class="toolbar">
+          <input
+            type="text"
+            id="benSearch"
+            placeholder="Search Card / Aadhaar / Name..."
+            onkeyup="filterRows('benTable', this.value)"
+            style="width: 240px"
+          />
+          <select id="benAction" style="width: 210px">
+            <option value="FREEZE">Hold / Freeze Marked Cards</option>
+            <option value="UNFREEZE">Unhold / Unfreeze Marked Cards</option>
+            <option value="INTEREST">Edit Extra Credit Interest %</option>
+          </select>
+          <input
+            type="number"
+            id="benRate"
+            value="5.0"
+            step="0.5"
+            style="width: 85px"
+            title="Interest %"
+          />
+          <input
+            type="text"
+            id="benReason"
+            value="Audit Verification Hold"
+            style="width: 200px"
+          />
+          <button
+            class="btn btn-red"
+            style="margin-top: 0"
+            onclick="execBulk('BENEFICIARY')"
+          >
+            Apply to Marked
+          </button>
+        </div>
+        <table id="benTable">
+          <thead>
+            <tr>
+              <th>Mark</th>
+              <th>AssureCare Card</th>
+              <th>Aadhaar Masked</th>
+              <th>Name (No-Edit)</th>
+              <th>Base 5L Used</th>
+              <th>Extra 2.5L Used</th>
+              <th>Interest %</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="benBody"></tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-top: 0">
+          Provider Registry (PAN/GST/Aadhaar/Bank) &amp; Scheme Earnings
+        </h3>
+        <div class="toolbar">
+          <select id="provAction" style="width: 230px">
+            <option value="VERIFY">Approve 'Govt Verified' Badge</option>
+            <option value="FREEZE">Hold / Freeze Provider</option>
+            <option value="UNFREEZE">Unhold / Unfreeze Provider</option>
+          </select>
+          <button
+            class="btn btn-teal"
+            style="margin-top: 0"
+            onclick="execBulk('PROVIDER')"
+          >
+            Apply to Marked Providers
+          </button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Mark</th>
+              <th>Provider Card</th>
+              <th>Name &amp; KYC (PAN/GST/Aadhaar)</th>
+              <th>Role</th>
+              <th>Payout Bank</th>
+              <th>Verification</th>
+              <th>Earnings</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="provBody"></tbody>
+        </table>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <h3 style="margin-top: 0">
+            4-Stage Grievance &amp; Surveillance Desk
+          </h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Tracking No</th>
+                <th>Complainant</th>
+                <th>Subject</th>
+                <th>Stage</th>
+                <th>Update</th>
+              </tr>
+            </thead>
+            <tbody id="cmpBody"></tbody>
+          </table>
+        </div>
+        <div class="card">
+          <h3 style="margin-top: 0">
+            Death Certificate Deactivation Approvals
+          </h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Req#</th>
+                <th>Card No</th>
+                <th>Attempt</th>
+                <th>Certificate</th>
+                <th>Status</th>
+                <th>Decision</th>
+              </tr>
+            </thead>
+            <tbody id="deactBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let state = null;
+      function showMsg(t, ok = true) {
+        const b = document.getElementById("msgBox");
+        b.className = "msg-banner " + (ok ? "msg-ok" : "msg-err");
+        b.innerText = t;
+        b.style.display = "block";
+      }
+
+      async function loadAdmin() {
+        const fy = document.getElementById("fFrom").value;
+        const ty = document.getElementById("fTo").value;
+        const sort = document.getElementById("fSort").value;
+        const res = await fetch(
+          `backend.php?action=get_system_state&from_year=${fy}&to_year=${ty}&sort=${sort}`,
+        );
+        state = await res.json();
+
+        document.getElementById("kpiZero").innerText =
+          "Rs. " + Number(state.treasury.zero_int).toLocaleString("en-IN");
+        document.getElementById("kpiWithInt").innerText =
+          "Rs. " + Number(state.treasury.with_int).toLocaleString("en-IN");
+        document.getElementById("kpiRec").innerText =
+          "Rs. " + Number(state.treasury.recovered).toLocaleString("en-IN");
+        document.getElementById("kpiPend").innerText =
+          "Rs. " + Number(state.treasury.pending).toLocaleString("en-IN");
+        document.getElementById("kpiNet").innerText =
+          "Rs. " +
+          Number(state.treasury.net_investment).toLocaleString("en-IN");
+
+        document.getElementById("benBody").innerHTML = state.beneficiaries
+          .map(
+            (b) => `
+        <tr>
+            <td><input type="checkbox" class="chk-BENEFICIARY" value="${b.assurecare_card_no}"></td>
+            <td><strong>${b.assurecare_card_no}</strong></td>
+            <td>${b.aadhaar_masked}</td>
+            <td>${b.full_name}</td>
+            <td>Rs. ${Number(b.base_5l_used || 0).toLocaleString("en-IN")}</td>
+            <td>Rs. ${Number(b.extra_2_5l_used || 0).toLocaleString("en-IN")}</td>
+            <td>${b.interest_rate_pct || 5}%</td>
+            <td><span class="badge ${b.account_status === "ACTIVE" ? "b-ok" : "b-no"}">${b.account_status}</span></td>
+        </tr>
+    `,
+          )
+          .join("");
+
+        document.getElementById("provBody").innerHTML = state.providers
+          .map((p) => {
+            const kycInfo =
+              p.role_type === "DOCTOR"
+                ? `Deg: ${p.doctor_degrees} | PAN: ${p.business_pan}`
+                : `PAN: ${p.business_pan} | GST: ${p.gst_number}`;
+            return `
+        <tr>
+            <td><input type="checkbox" class="chk-PROVIDER" value="${p.provider_id}"></td>
+            <td><strong>${p.provider_card_no}</strong></td>
+            <td>${p.org_or_doctor_name}<br><small style="color:#475569;">${kycInfo}</small></td>
+            <td>${p.role_type}</td>
+            <td><small>${p.bank_account_no}<br>${p.bank_ifsc}</small></td>
+            <td>${p.is_verified == 1 ? '<span class="badge b-ok">✔ GOVT VERIFIED</span>' : '<span class="badge b-wait">PENDING</span>'}</td>
+            <td><strong>Rs. ${Number(p.total_earnings).toLocaleString("en-IN")}</strong></td>
+            <td><span class="badge ${p.account_status === "ACTIVE" ? "b-ok" : "b-no"}">${p.account_status}</span></td>
+        </tr>`;
+          })
+          .join("");
+
+        document.getElementById("cmpBody").innerHTML = state.complaints
+          .map(
+            (c) => `
+        <tr>
+            <td><strong>${c.tracking_no}</strong></td>
+            <td>${c.complainant_name_locked}<br><small>${c.assurecare_card_no}</small></td>
+            <td>${c.subject}</td>
+            <td><span class="badge b-wait">${c.stage}</span></td>
+            <td>
+                <select onchange="updateStage(${c.complaint_id}, this.value)">
+                    <option value="COMPLAINT_SUBMITTED" ${c.stage === "COMPLAINT_SUBMITTED" ? "selected" : ""}>Submitted</option>
+                    <option value="UNDER_SURVEILLANCE" ${c.stage === "UNDER_SURVEILLANCE" ? "selected" : ""}>Under Surveillance</option>
+                    <option value="TAKING_ACTION" ${c.stage === "TAKING_ACTION" ? "selected" : ""}>Taking Action</option>
+                    <option value="FILE_CLOSED_SOLVED" ${c.stage === "FILE_CLOSED_SOLVED" ? "selected" : ""}>File Closed / Solved</option>
+                </select>
+            </td>
+        </tr>
+    `,
+          )
+          .join("");
+
+        document.getElementById("deactBody").innerHTML = state.deactivations
+          .map(
+            (d) => `
+        <tr>
+            <td>#${d.req_id}</td>
+            <td>${d.assurecare_card_no}</td>
+            <td>${d.attempt_no} / 2</td>
+            <td>${d.death_cert_filename}</td>
+            <td><span class="badge ${d.status === "APPROVED" ? "b-ok" : d.status === "REJECTED" ? "b-no" : "b-wait"}">${d.status}</span></td>
+            <td>
+                ${d.status === "PENDING" ? `<button class="btn btn-teal" style="margin:0;padding:5px 9px;" onclick="decideDeact(${d.req_id},'APPROVED')">Approve</button> <button class="btn btn-red" style="margin:0;padding:5px 9px;" onclick="decideDeact(${d.req_id},'REJECTED')">Reject</button>` : "Processed"}
+            </td>
+        </tr>
+    `,
+          )
+          .join("");
+      }
+
+      async function execBulk(type) {
+        try {
+          const ids = Array.from(
+            document.querySelectorAll(`.chk-${type}:checked`),
+          ).map((x) => x.value);
+          const bulk_action = document.getElementById(
+            type === "PROVIDER" ? "provAction" : "benAction",
+          ).value;
+          const body = new URLSearchParams({
+            target_type: type,
+            bulk_action,
+            ids: JSON.stringify(ids),
+            reason: document.getElementById("benReason").value,
+            interest_rate: document.getElementById("benRate").value,
+          });
+          const res = await fetch("backend.php?action=admin_bulk_action", {
+            method: "POST",
+            body,
+          });
+          const d = await res.json();
+          if (d.status !== "OK") throw new Error(d.message);
+          showMsg(d.message);
+          loadAdmin();
+        } catch (e) {
+          showMsg(e.message, false);
+        }
+      }
+
+      async function updateStage(cid, stage) {
+        const body = new URLSearchParams({ complaint_id: cid, stage });
+        const res = await fetch("backend.php?action=update_complaint_stage", {
+          method: "POST",
+          body,
+        });
+        const d = await res.json();
+        showMsg(d.message, d.status === "OK");
+        loadAdmin();
+      }
+
+      async function decideDeact(reqId, decision) {
+        const reason = prompt(
+          "Enter approval/rejection remark:",
+          decision === "APPROVED"
+            ? "Death certificate verified"
+            : "Invalid document",
+        );
+        if (reason === null) return;
+        const body = new URLSearchParams({ req_id: reqId, decision, reason });
+        const res = await fetch("backend.php?action=process_deactivation", {
+          method: "POST",
+          body,
+        });
+        const d = await res.json();
+        showMsg(d.message, d.status === "OK");
+        loadAdmin();
+      }
+
+      function filterRows(tid, q) {
+        q = q.toLowerCase();
+        document
+          .querySelectorAll(`#${tid} tbody tr`)
+          .forEach(
+            (r) =>
+              (r.style.display = r.innerText.toLowerCase().includes(q)
+                ? ""
+                : "none"),
+          );
+      }
+
+      function exportCSV() {
+        if (!state) return;
+        let csv =
+          "TxID,Year,AssureCareCard,Section,Direction,Source,Amount,Description,SHA256\n";
+        state.transactions.forEach(
+          (t) =>
+            (csv += `${t.tx_id},${t.tx_year},${t.assurecare_card_no},${t.section_type},${t.entry_direction},${t.credit_source},${t.amount},"${t.description}",${t.curr_hash}\n`),
+        );
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+        a.download = "NHAS_Govt_Audit_Statement.csv";
+        a.click();
+      }
+
+      loadAdmin();
+    </script>
+  </body>
+</html>

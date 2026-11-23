@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>NHAS Diagnostic Lab &amp; Medical Store Portal</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="topbar">
+      <div>
+        <strong style="font-size: 17px"
+          >NATIONAL HEALTH ASSURANCE SCHEME (NHAS)</strong
+        ><br />
+        <small style="opacity: 0.85"
+          >AssureCare Virtual Card &amp; Role-Based Immutable Governance
+          System</small
+        >
+      </div>
+      <div style="text-align: right; font-size: 12px">
+        <strong>Aman Kishore</strong> (Enroll: 910/25)<br />
+        Supervisor: Dr. Rajshree | BBAU Lucknow
+      </div>
+    </div>
+    <div class="navbar">
+      <a href="index.html">Login & Registration (KYC Fetch)</a>
+      <a href="lab_login.html" class="active">Pharmacist Portal</a>
+    </div>
+
+    <div class="wrap">
+      <div id="msgBox" class="msg-banner"></div>
+
+      <div class="grid2">
+        <div class="card">
+          <h3 style="margin-top: 0; color: var(--amber)">
+            Medical Store / Pharmacy Portal (Prescription-Linked)
+          </h3>
+          <p style="font-size: 12.5px; color: #475569">
+            Medicines can only be billed against a valid Doctor Prescription ID
+            (Rx#) and Patient OTP consent.
+          </p>
+          <label>Select Medical Store (Pharmacy)</label>
+          <select id="pharmProv"></select>
+          <label>Patient AssureCare Card No.</label>
+          <input type="text" id="pharmCard" value="AC-2026-8841-9920" />
+          <label>Valid Doctor Prescription ID (Mandatory)</label>
+          <input type="number" id="pharmRx" value="1" />
+          <label>Medicine Bill Amount (Rs.)</label>
+          <input type="number" id="pharmAmt" value="1200" />
+          <label>Medicines Issued</label>
+          <input
+            type="text"
+            id="pharmDesc"
+            value="Prescribed Cardiac & Fever Medicines"
+          />
+          <label>Patient Consent OTP (Demo: 123456)</label>
+          <input type="text" id="pharmOtp" value="123456" />
+          <button
+            class="btn btn-amber"
+            onclick="
+              submitProviderBill(
+                'PHARMACY',
+                'pharmProv',
+                'pharmCard',
+                'pharmRx',
+                'pharmAmt',
+                'pharmDesc',
+                'pharmOtp',
+              )
+            "
+          >
+            Submit Pharmacy Bill
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function showMsg(t, ok = true) {
+        const b = document.getElementById("msgBox");
+        b.className = "msg-banner " + (ok ? "msg-ok" : "msg-err");
+        b.innerText = t;
+        b.style.display = "block";
+      }
+
+      async function initLabPharm() {
+        const [sRes, dRes] = await Promise.all([
+          fetch("backend.php?action=get_session"),
+          fetch("backend.php?action=get_system_state"),
+        ]);
+        const sess = await sRes.json();
+        const d = await dRes.json();
+        const fill = (id, role) => {
+          const items = d.providers.filter((p) => p.role_type === role);
+          document.getElementById(id).innerHTML = items
+            .map(
+              (p) =>
+                `<option value="${p.provider_id}">${p.org_or_doctor_name} (${p.is_verified == 1 ? "✔ Govt Verified" : "UNVERIFIED"}) [${p.account_status}]</option>`,
+            )
+            .join("");
+        };
+        fill("labProv", "DIAGNOSTIC_LAB");
+        fill("pharmProv", "PHARMACY");
+        if (sess.session && sess.session.provider_id) {
+          document.getElementById("labProv").value = sess.session.provider_id;
+          document.getElementById("pharmProv").value = sess.session.provider_id;
+        }
+      }
+
+      async function submitProviderBill(section, pEl, cEl, rEl, aEl, dEl, oEl) {
+        try {
+          const body = new URLSearchParams({
+            section_type: section,
+            provider_id: document.getElementById(pEl).value,
+            card_no: document.getElementById(cEl).value,
+            rx_id: document.getElementById(rEl).value,
+            amount: document.getElementById(aEl).value,
+            description: document.getElementById(dEl).value,
+            otp: document.getElementById(oEl).value,
+          });
+          const res = await fetch("backend.php?action=process_billing", {
+            method: "POST",
+            body,
+          });
+          const d = await res.json();
+          if (d.status !== "OK") throw new Error(d.message);
+          showMsg(d.message);
+        } catch (e) {
+          showMsg(e.message, false);
+        }
+      }
+
+      initLabPharm();
+    </script>
+  </body>
+</html>

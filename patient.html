@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>AssureCare Beneficiary Portal — Passbook &amp; Virtual Card</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  </head>
+  <body>
+    <div class="topbar">
+      <div>
+        <strong style="font-size: 17px"
+          >NATIONAL HEALTH ASSURANCE SCHEME (NHAS)</strong
+        ><br />
+        <small style="opacity: 0.85"
+          >AssureCare Virtual Card &amp; Role-Based Immutable Governance
+          System</small
+        >
+      </div>
+      <div style="text-align: right; font-size: 12px">
+        <strong>Aman Kishore</strong> (Enroll: 910/25)<br />
+        Supervisor: Dr. Rajshree | BBAU Lucknow
+      </div>
+    </div>
+    <div class="navbar">
+      <a href="index.html">Login & Registration (KYC Fetch)</a>
+      <a href="patient.html" class="active">Patient Portal</a>
+    </div>
+
+    <div class="wrap">
+      <div id="msgBox" class="msg-banner"></div>
+
+      <div class="card toolbar">
+        <div style="flex: 1">
+          <label style="margin-top: 0"
+            >AssureCare Virtual Card No. (Auto-Loaded on Login)</label
+          >
+          <input type="text" id="cardInput" value="AC-2026-8841-9920" />
+        </div>
+        <button class="btn" style="margin-top: 16px" onclick="loadPatient()">
+          Load Card &amp; 3-Section Statement
+        </button>
+        <button
+          class="btn btn-amber"
+          style="margin-top: 16px"
+          onclick="runJan1()"
+        >
+          Simulate 01-Jan Auto-Reconciliation
+        </button>
+      </div>
+
+      <div class="grid2">
+        <div class="virtual-card">
+          <div>
+            <div style="font-size: 11px; letter-spacing: 1px; color: #93c5fd">
+              NATIONAL HEALTH ASSURANCE SCHEME
+            </div>
+            <h2 style="margin: 4px 0">ASSURECARE VIRTUAL CARD</h2>
+            <div
+              id="vcCard"
+              style="font-size: 16px; font-weight: 800; margin: 6px 0"
+            >
+              AC-2026-8841-9920
+            </div>
+            <div id="vcName">Name: RAMESH KUMAR (Aadhaar Locked)</div>
+            <div
+              id="vcMeta"
+              style="font-size: 12px; opacity: 0.9; margin-top: 4px"
+            >
+              Aadhaar: XXXX-XXXX-0101 | Status: ACTIVE
+            </div>
+          </div>
+          <div class="qr-box"><div id="vcQr"></div></div>
+        </div>
+
+        <div class="card" style="margin-bottom: 0">
+          <h3 style="margin-top: 0">
+            Live Annual Health Credit Wallet (01 Jan – 31 Dec)
+          </h3>
+          <p>
+            0% Interest Base Remaining: <strong id="baseRem">Rs. 0</strong> /
+            Rs. 5,00,000
+          </p>
+          <p>
+            Emergency +Rs. 2.5L Buffer Remaining:
+            <strong id="extraRem">Rs. 0</strong>
+          </p>
+          <button class="btn btn-amber" onclick="applyExtra()">
+            Apply Once-a-Year +Rs. 2,50,000 Emergency Credit
+          </button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 20px">
+        <h3 style="margin-top: 0">
+          Appointments &amp; Free Revisit Validity Tracker
+        </h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Rx#</th>
+              <th>Doctor / Hospital</th>
+              <th>Visit Type</th>
+              <th>Fee Paid</th>
+              <th>Visit Date</th>
+              <th>Free Revisit Valid Till</th>
+              <th>Next Follow-Up</th>
+            </tr>
+          </thead>
+          <tbody id="appBody"></tbody>
+        </table>
+      </div>
+
+      <div class="grid3">
+        <div class="card">
+          <h4 style="margin-top: 0; color: var(--teal)">
+            Section 1: Doctor &amp; Hospital Fees
+          </h4>
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Provider</th>
+                <th>Details</th>
+                <th>Amt</th>
+              </tr>
+            </thead>
+            <tbody id="s1"></tbody>
+          </table>
+        </div>
+        <div class="card">
+          <h4 style="margin-top: 0; color: var(--blue)">
+            Section 2: Diagnostic Lab Tests
+          </h4>
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Lab</th>
+                <th>Rx#</th>
+                <th>Amt</th>
+              </tr>
+            </thead>
+            <tbody id="s2"></tbody>
+          </table>
+        </div>
+        <div class="card">
+          <h4 style="margin-top: 0; color: var(--amber)">
+            Section 3: Medical Store / Pharmacy
+          </h4>
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Store</th>
+                <th>Rx#</th>
+                <th>Amt</th>
+              </tr>
+            </thead>
+            <tbody id="s3"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-top: 0">
+          Credit &amp; 1st-January Auto-Reconciliation Passbook (SHA-256
+          Chained)
+        </h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Tx#</th>
+              <th>Year</th>
+              <th>Direction</th>
+              <th>Credit Bucket</th>
+              <th>Description</th>
+              <th>Amount</th>
+              <th>SHA-256 Hash</th>
+            </tr>
+          </thead>
+          <tbody id="sSys"></tbody>
+        </table>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <h3 style="margin-top: 0">
+            File Identity-Locked Complaint / Feedback
+          </h3>
+          <label>AssureCare Card ID (Read-Only)</label
+          ><input type="text" id="cCard" readonly />
+          <label>Beneficiary Name (Aadhaar Locked)</label
+          ><input type="text" id="cName" readonly />
+          <label>Accused Provider Card ID (Optional)</label
+          ><input type="text" id="cProv" placeholder="e.g. PR-LABS-3001" />
+          <label>Subject</label
+          ><input
+            type="text"
+            id="cSubj"
+            placeholder="e.g. Hospital demanded cash"
+          />
+          <label>Message &amp; Evidence Details</label
+          ><textarea id="cMsg" rows="2"></textarea>
+          <button class="btn btn-red" onclick="sendComplaint()">
+            Submit Complaint &amp; Get Tracking Number
+          </button>
+        </div>
+
+        <div class="card">
+          <h3 style="margin-top: 0">
+            Account Deactivation (Death Certificate | Max 2x/Year)
+          </h3>
+          <p style="font-size: 12.5px; color: #475569">
+            Demographic profile fields are Aadhaar-locked. Deactivation requires
+            Death Certificate upload &amp; Admin verification (max 2
+            requests/year).
+          </p>
+          <label>Death Certificate Document Filename</label>
+          <input type="text" id="dCert" value="death_certificate_2026.pdf" />
+          <button class="btn" onclick="sendDeact()">
+            Submit Death Certificate Deactivation Request
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function showMsg(t, ok = true) {
+        let b = document.getElementById("msgBox");
+        if (!b) {
+          b = document.createElement("div");
+          b.id = "msgBox";
+          const wrap = document.querySelector(".wrap") || document.body;
+          wrap.insertBefore(b, wrap.firstChild);
+        }
+        b.className = "msg-banner " + (ok ? "msg-ok" : "msg-err");
+        b.innerText = t;
+        b.style.display = "block";
+      }
+
+      function setTxt(id, val) {
+        const el = document.getElementById(id);
+        if (el) el.innerText = val;
+      }
+
+      function setVal(id, val) {
+        const el = document.getElementById(id);
+        if (el) el.value = val;
+      }
+
+      function setHtml(id, val) {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = val;
+      }
+
+      async function initSessionPatient() {
+        try {
+          const sRes = await fetch("backend.php?action=get_session");
+          const sess = await sRes.json();
+          if (sess.session && sess.session.card_no) {
+            setVal("cardInput", sess.session.card_no);
+            loadPatient();
+          }
+        } catch (e) {
+          console.warn("Session check skipped:", e);
+        }
+      }
+
+      async function loadPatient() {
+        try {
+          const cardInput = document.getElementById("cardInput");
+          const card = cardInput ? cardInput.value.trim() : "";
+          if (!card) return;
+
+          const res = await fetch(
+            `backend.php?action=lookup_card&card_no=${encodeURIComponent(card)}`,
+          );
+          const d = await res.json();
+          if (d.status !== "OK") throw new Error(d.message);
+
+          const b = d.beneficiary;
+          setTxt("vcCard", b.assurecare_card_no);
+          setTxt("vcName", `Name: ${b.full_name} (ID Locked)`);
+          setTxt(
+            "vcMeta",
+            `ID: ${b.aadhaar_masked} | Status: ${b.account_status}`,
+          );
+          setTxt(
+            "baseRem",
+            "Rs. " + Number(d.base_remaining).toLocaleString("en-IN"),
+          );
+          setTxt(
+            "extraRem",
+            "Rs. " + Number(d.extra_remaining).toLocaleString("en-IN"),
+          );
+          setVal("cCard", b.assurecare_card_no);
+          setVal("cName", b.full_name);
+
+          const qrEl = document.getElementById("vcQr");
+          if (qrEl) {
+            qrEl.innerHTML = "";
+            if (typeof QRCode !== "undefined") {
+              new QRCode(qrEl, {
+                text: b.assurecare_card_no,
+                width: 74,
+                height: 74,
+              });
+            }
+          }
+
+          if (d.appointments) {
+            setHtml(
+              "appBody",
+              d.appointments
+                .map(
+                  (a) => `
+            <tr>
+              <td><strong>#${a.rx_id}</strong></td>
+              <td>${a.org_or_doctor_name}</td>
+              <td><span class="badge ${a.visit_type === "FREE_REVISIT" ? "b-ok" : "b-wait"}">${a.visit_type}</span></td>
+              <td>Rs. ${a.fee_charged}</td>
+              <td>${a.appointment_date}</td>
+              <td><strong>${a.revisit_valid_until}</strong></td>
+              <td>${a.next_followup_date || "-"}</td>
+            </tr>`,
+                )
+                .join(""),
+            );
+          }
+
+          const txs = d.transactions || [];
+          setHtml(
+            "s1",
+            txs
+              .filter((t) => t.section_type === "DOCTOR_HOSPITAL")
+              .map(
+                (t) =>
+                  `<tr><td>${t.created_at.slice(0, 10)}</td><td>${t.org_or_doctor_name || "-"}</td><td>${t.description}</td><td>Rs. ${t.amount}</td></tr>`,
+              )
+              .join(""),
+          );
+          setHtml(
+            "s2",
+            txs
+              .filter((t) => t.section_type === "DIAGNOSTIC_LAB")
+              .map(
+                (t) =>
+                  `<tr><td>${t.created_at.slice(0, 10)}</td><td>${t.org_or_doctor_name || "-"}</td><td>#${t.rx_id}</td><td>Rs. ${t.amount}</td></tr>`,
+              )
+              .join(""),
+          );
+          setHtml(
+            "s3",
+            txs
+              .filter((t) => t.section_type === "PHARMACY")
+              .map(
+                (t) =>
+                  `<tr><td>${t.created_at.slice(0, 10)}</td><td>${t.org_or_doctor_name || "-"}</td><td>#${t.rx_id}</td><td>Rs. ${t.amount}</td></tr>`,
+              )
+              .join(""),
+          );
+          setHtml(
+            "sSys",
+            txs
+              .map(
+                (t) =>
+                  `<tr><td>${t.tx_id}</td><td>${t.tx_year}</td><td>${t.entry_direction}</td><td>${t.credit_source}</td><td>${t.description}</td><td>Rs. ${t.amount}</td><td><code>${t.curr_hash.slice(0, 14)}...</code></td></tr>`,
+              )
+              .join(""),
+          );
+        } catch (e) {
+          showMsg(e.message, false);
+        }
+      }
+
+      async function applyExtra() {
+        try {
+          const body = new URLSearchParams({
+            card_no: document.getElementById("cardInput").value,
+          });
+          const res = await fetch("backend.php?action=apply_extra_credit", {
+            method: "POST",
+            body,
+          });
+          const d = await res.json();
+          if (d.status !== "OK") throw new Error(d.message);
+          showMsg("✔ " + d.message);
+          loadPatient();
+        } catch (e) {
+          showMsg(e.message, false);
+        }
+      }
+
+      async function runJan1() {
+        try {
+          const body = new URLSearchParams({
+            card_no: document.getElementById("cardInput").value,
+          });
+          const res = await fetch("backend.php?action=simulate_jan1_rollover", {
+            method: "POST",
+            body,
+          });
+          const d = await res.json();
+          if (d.status !== "OK") throw new Error(d.message);
+          showMsg("✔ " + d.message);
+          loadPatient();
+        } catch (e) {
+          showMsg(e.message, false);
+        }
+      }
+
+      async function sendComplaint() {
+        try {
+          const body = new URLSearchParams({
+            card_no: document.getElementById("cCard").value,
+            accused_provider: document.getElementById("cProv")
+              ? document.getElementById("cProv").value
+              : "",
+            subject: document.getElementById("cSubj").value,
+            message: document.getElementById("cMsg").value,
+          });
+          const res = await fetch("backend.php?action=submit_complaint", {
+            method: "POST",
+            body,
+          });
+          const d = await res.json();
+          if (d.status !== "OK") throw new Error(d.message);
+          showMsg("✔ Complaint Submitted! Tracking Number: " + d.tracking_no);
+        } catch (e) {
+          showMsg(e.message, false);
+        }
+      }
+
+      async function sendDeact() {
+        try {
+          const body = new URLSearchParams({
+            card_no: document.getElementById("cardInput").value,
+            cert_filename: document.getElementById("dCert").value,
+          });
+          const res = await fetch("backend.php?action=request_deactivation", {
+            method: "POST",
+            body,
+          });
+          const d = await res.json();
+          if (d.status !== "OK") throw new Error(d.message);
+          showMsg("✔ " + d.message);
+        } catch (e) {
+          showMsg(e.message, false);
+        }
+      }
+
+      initSessionPatient();
+    </script>
+  </body>
+</html>

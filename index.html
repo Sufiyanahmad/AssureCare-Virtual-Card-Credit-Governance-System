@@ -1,0 +1,549 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>NHAS Login &amp; Registration — AssureCare System</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  </head>
+  <body>
+    <div class="topbar">
+      <div>
+        <strong style="font-size: 17px"
+          >NATIONAL HEALTH ASSURANCE SCHEME (NHAS)</strong
+        ><br />
+        <small style="opacity: 0.85"
+          >AssureCare Virtual Card &amp; Role-Based Immutable Governance
+          System</small
+        >
+      </div>
+      <div style="text-align: right; font-size: 12px">
+        <strong>Aman Kishore</strong> (Enroll: 910/25)<br />
+        Supervisor: Dr. Rajshree | BBAU Lucknow
+      </div>
+    </div>
+    <div class="navbar">
+      <a href="index.html" class="active"
+        >Login &amp; Registration (KYC Fetch)</a
+      >
+    </div>
+
+    <div class="wrap">
+      <div id="msgBox" class="msg-banner"></div>
+
+      <!-- ROLE-BASED LOGIN PORTAL -->
+      <div class="card" style="border-top: 4px solid var(--navy)">
+        <h3 style="margin-top: 0; color: var(--navy)">
+          Role-Based Portal Login (Opens Specific Role Portal Only)
+        </h3>
+        <p style="font-size: 12.5px; color: #475569; margin-top: -4px">
+          • <strong>Patient / Individual Doctor:</strong> Enter
+          <strong>12-Digit ID (or Virtual Card No.)</strong> +
+          <strong>Last 4 digits of ID OR Virtual Card No.</strong> (either one
+          logs in).<br />
+          • <strong>Hospital / Diagnostic Lab / Medical Store:</strong> Enter
+          <strong>Virtual Card No. (or Business PAN)</strong> +
+          <strong>Last 4 digits of Virtual Card No.</strong> (no individual ID
+          required).
+        </p>
+        <div class="grid3">
+          <div>
+            <label>Select Role Portal</label>
+            <select id="loginRole" onchange="updateLoginPlaceholder()">
+              <option value="PATIENT">Patient Portal</option>
+              <option value="DOCTOR">Doctor Portal</option>
+              <option value="HOSPITAL">Hospital Portal</option>
+              <option value="DIAGNOSTIC_LAB">Diagnostic Lab Portal</option>
+              <option value="PHARMACY">Pharmacist Portal</option>
+            </select>
+          </div>
+          <div>
+            <label id="loginIdLabel"
+              >12-Digit Citizen ID or Virtual Card No.</label
+            >
+            <input
+              type="text"
+              id="loginPrimaryId"
+              placeholder="Enter ID or Virtual Card No"
+            />
+          </div>
+          <div>
+            <label id="loginLast4Label"
+              >Last 4 Digits (of ID OR Virtual Card)</label
+            >
+            <div style="display: flex; gap: 8px">
+              <input
+                type="text"
+                id="loginLast4"
+                maxlength="4"
+                placeholder="4 digits"
+              />
+              <button
+                class="btn"
+                style="margin-top: 0; white-space: nowrap"
+                onclick="doRoleLogin()"
+              >
+                Login &amp; Open Portal
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <!-- PATIENT REGISTRATION (ONLY CITIZEN ID) -->
+        <div class="card">
+          <h3 style="margin-top: 0; color: var(--navy)">
+            Patient / Citizen Registration (ID Only)
+          </h3>
+          <label
+            >12-Digit Citizen ID Number (Click Fetch to Auto-Load KYC)</label
+          >
+          <div style="display: flex; gap: 8px">
+            <input
+              type="text"
+              id="cAadhaar"
+              maxlength="12"
+              placeholder="Enter 12-digit Citizen ID"
+            />
+            <button
+              class="btn"
+              style="margin-top: 0"
+              onclick="fetchKyc('CITIZEN')"
+            >
+              Fetch
+            </button>
+          </div>
+          <label>Full Name (Auto-Fetched &amp; Locked)</label>
+          <input type="text" id="cName" readonly />
+          <div class="grid2">
+            <div>
+              <label>DOB</label><input type="text" id="cDob" readonly />
+            </div>
+            <div>
+              <label>Gender</label><input type="text" id="cGender" readonly />
+            </div>
+          </div>
+          <div class="grid2">
+            <div>
+              <label>Mobile</label><input type="text" id="cMobile" readonly />
+            </div>
+            <div>
+              <label>District</label><input type="text" id="cDist" readonly />
+            </div>
+          </div>
+          <button class="btn" onclick="registerPatient()">
+            Generate Patient AssureCare Card
+          </button>
+        </div>
+
+        <!-- PROVIDER REGISTRATION -->
+        <div class="card">
+          <h3 style="margin-top: 0; color: var(--teal)">
+            Provider Registration (Role-Specific KYC)
+          </h3>
+          <label>Select Provider Role</label>
+          <select id="pRole" onchange="toggleProviderFields()">
+            <option value="HOSPITAL">
+              Hospital (Business PAN + GST + Bank + Visit Fees)
+            </option>
+            <option value="DIAGNOSTIC_LAB">
+              Diagnostic Lab (Business PAN + GST + Bank)
+            </option>
+            <option value="PHARMACY">
+              Medical Store / Pharmacy (Business PAN + GST + Bank)
+            </option>
+            <option value="DOCTOR">
+              Individual Doctor (Degrees + 12-Digit ID + PAN + Bank)
+            </option>
+          </select>
+
+          <!-- Business Specific Fields (Hospital, Lab, Pharmacy — NO individual ID) -->
+          <div id="bizFields">
+            <label>Business PAN Card Number (Click Fetch to Auto-Load)</label>
+            <div style="display: flex; gap: 8px">
+              <input
+                type="text"
+                id="bPan"
+                maxlength="10"
+                placeholder="Enter Business PAN"
+              />
+              <button
+                class="btn btn-teal"
+                style="margin-top: 0"
+                onclick="fetchKyc('BUSINESS_ORG')"
+              >
+                Fetch
+              </button>
+            </div>
+            <label>GST Registration Number (GSTIN)</label>
+            <input
+              type="text"
+              id="bGst"
+              placeholder="Auto-fetched GSTIN"
+              readonly
+            />
+          </div>
+
+          <!-- Doctor Specific Fields -->
+          <div id="doctorFields" style="display: none">
+            <label>Doctor 12-Digit ID Number (Click Fetch to Auto-Load)</label>
+            <div style="display: flex; gap: 8px">
+              <input
+                type="text"
+                id="dAadhaar"
+                maxlength="12"
+                placeholder="Enter 12-digit Doctor ID"
+              />
+              <button
+                class="btn btn-teal"
+                style="margin-top: 0"
+                onclick="fetchKyc('DOCTOR')"
+              >
+                Fetch
+              </button>
+            </div>
+            <label>Medical Degrees (MBBS, MD, MS, etc.)</label>
+            <input
+              type="text"
+              id="dDegrees"
+              placeholder="Auto-fetched Degrees"
+              readonly
+            />
+            <label>Doctor Personal PAN Card</label>
+            <input
+              type="text"
+              id="dPan"
+              placeholder="Auto-fetched PAN"
+              readonly
+            />
+          </div>
+
+          <label>Organization / Doctor Full Name</label>
+          <input
+            type="text"
+            id="pName"
+            placeholder="Auto-fetched Name"
+            readonly
+          />
+
+          <div class="grid2">
+            <div>
+              <label>Payout Bank Account No.</label
+              ><input type="text" id="pBank" readonly />
+            </div>
+            <div>
+              <label>Bank IFSC Code</label
+              ><input type="text" id="pIfsc" readonly />
+            </div>
+          </div>
+
+          <!-- Hospital In-House Affiliation & Revenue Split -->
+          <div
+            id="affiliationBox"
+            style="
+              display: none;
+              background: #f8fafc;
+              padding: 10px;
+              border-radius: 8px;
+              border: 1px solid #cbd5e1;
+              margin-top: 10px;
+            "
+          >
+            <strong style="font-size: 12px; color: var(--navy)"
+              >Optional: Hospital In-House Affiliation (Leave blank if
+              Independent)</strong
+            >
+            <div class="grid2">
+              <div>
+                <label>Parent Hospital Card ID (e.g. PR-HOSP-XXXX)</label>
+                <input
+                  type="text"
+                  id="pParentHosp"
+                  placeholder="Optional Hospital Card ID"
+                />
+              </div>
+              <div>
+                <label>Hospital Share % (e.g. 70% Hospital / 30% Unit)</label>
+                <input
+                  type="number"
+                  id="pHospPct"
+                  value="0"
+                  min="0"
+                  max="100"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div id="visitRulesBox">
+            <div class="grid3">
+              <div>
+                <label>New Visit Fee (Rs.)</label
+                ><input type="number" id="pFee" value="500" />
+              </div>
+              <div>
+                <label>Free Revisit Valid (Days)</label
+                ><input type="number" id="pRevisit" value="15" />
+              </div>
+              <div>
+                <label>Max Patients / Day</label
+                ><input type="number" id="pMaxDay" value="25" />
+              </div>
+            </div>
+          </div>
+
+          <div class="grid2">
+            <div>
+              <label>Contact Mobile No.</label
+              ><input type="text" id="pMobile" readonly />
+            </div>
+            <div>
+              <label>District</label><input type="text" id="pDist" readonly />
+            </div>
+          </div>
+          <button class="btn btn-teal" onclick="registerProvider()">
+            Submit Provider &amp; Generate Virtual Card
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function showBanner(t, ok = true) {
+        const el = document.getElementById("msgBox");
+        el.className = "msg-banner " + (ok ? "msg-ok" : "msg-err");
+        el.innerText = t;
+        el.style.display = "block";
+      }
+
+      function updateLoginPlaceholder() {
+        const r = document.getElementById("loginRole").value;
+        if (r === "PATIENT" || r === "DOCTOR") {
+          document.getElementById("loginIdLabel").innerText =
+            "12-Digit ID Number or Virtual Card No.";
+          document.getElementById("loginLast4Label").innerText =
+            "Last 4 Digits (of ID OR Virtual Card)";
+        } else {
+          document.getElementById("loginIdLabel").innerText =
+            "Virtual Card No. or Business PAN";
+          document.getElementById("loginLast4Label").innerText =
+            "Last 4 Digits of Virtual Card No.";
+        }
+      }
+
+      async function doRoleLogin() {
+        try {
+          const body = new URLSearchParams({
+            login_role: document.getElementById("loginRole").value,
+            primary_id: document.getElementById("loginPrimaryId").value,
+            last4_secret: document.getElementById("loginLast4").value,
+          });
+          const res = await fetch("backend.php?action=login_role", {
+            method: "POST",
+            body,
+          });
+          const d = await res.json();
+          if (d.status !== "OK") throw new Error(d.message);
+          window.location.href = d.redirect;
+        } catch (e) {
+          showBanner(e.message, false);
+        }
+      }
+
+      function toggleProviderFields() {
+        const r = document.getElementById("pRole").value;
+        const isDoc = r === "DOCTOR";
+        document.getElementById("doctorFields").style.display = isDoc
+          ? "block"
+          : "none";
+        document.getElementById("bizFields").style.display = isDoc
+          ? "none"
+          : "block";
+        document.getElementById("affiliationBox").style.display =
+          r === "HOSPITAL" ? "none" : "block";
+        document.getElementById("visitRulesBox").style.display =
+          r === "DOCTOR" || r === "HOSPITAL" ? "block" : "none";
+      }
+
+      async function loadDummyKyc() {
+        const res = await fetch("backend.php?action=get_dummy_kyc_list");
+        const d = await res.json();
+        document.getElementById("dummyPills").innerHTML = d.kyc_records
+          .map(
+            (k) =>
+              `<span class="kyc-pill" onclick="applyDummy('${k.entity_type}','${k.id_number}','${k.gender_or_cat}')">[${k.entity_type}] ${k.full_name} (${k.id_number})</span>`,
+          )
+          .join("");
+      }
+
+      function applyDummy(type, idNum, cat) {
+        if (type === "CITIZEN") {
+          document.getElementById("cAadhaar").value = idNum;
+          fetchKyc("CITIZEN");
+        } else if (type === "DOCTOR") {
+          document.getElementById("pRole").value = "DOCTOR";
+          toggleProviderFields();
+          document.getElementById("dAadhaar").value = idNum;
+          fetchKyc("DOCTOR");
+        } else {
+          document.getElementById("pRole").value = cat;
+          toggleProviderFields();
+          document.getElementById("bPan").value = idNum;
+          fetchKyc("BUSINESS_ORG");
+        }
+      }
+
+      async function fetchKyc(type) {
+        try {
+          let id = "";
+          if (type === "CITIZEN")
+            id = document.getElementById("cAadhaar").value;
+          else if (type === "DOCTOR")
+            id = document.getElementById("dAadhaar").value;
+          else id = document.getElementById("bPan").value;
+
+          const res = await fetch(
+            `backend.php?action=fetch_kyc_by_id&id_number=${encodeURIComponent(id)}`,
+          );
+          const d = await res.json();
+          if (d.status !== "OK") throw new Error(d.message);
+          const r = d.record;
+
+          if (type === "CITIZEN") {
+            document.getElementById("cName").value = r.full_name;
+            document.getElementById("cDob").value = r.dob_or_incorp;
+            document.getElementById("cGender").value = r.gender_or_cat;
+            document.getElementById("cMobile").value = r.mobile_no;
+            document.getElementById("cDist").value = r.district;
+          } else if (type === "DOCTOR") {
+            document.getElementById("pName").value = r.full_name;
+            document.getElementById("dDegrees").value = r.gender_or_cat;
+            document.getElementById("dPan").value = r.secondary_id;
+            document.getElementById("pBank").value = r.default_bank_acc;
+            document.getElementById("pIfsc").value = r.default_ifsc;
+            document.getElementById("pMobile").value = r.mobile_no;
+            document.getElementById("pDist").value = r.district;
+          } else {
+            document.getElementById("pName").value = r.full_name;
+            document.getElementById("bGst").value = r.secondary_id;
+            document.getElementById("pBank").value = r.default_bank_acc;
+            document.getElementById("pIfsc").value = r.default_ifsc;
+            document.getElementById("pMobile").value = r.mobile_no;
+            document.getElementById("pDist").value = r.district;
+          }
+          showBanner(`Govt KYC Verified & Auto-Fetched for ${r.full_name}!`);
+        } catch (e) {
+          showBanner(e.message, false);
+        }
+      }
+
+      function showCard(cardNo, name, sub) {
+        document.getElementById("cardPreview").style.display = "flex";
+        document.getElementById("prevCardNo").innerText = cardNo;
+        document.getElementById("prevName").innerText = name;
+        document.getElementById("prevSub").innerText = sub;
+        document.getElementById("prevQr").innerHTML = "";
+        new QRCode(document.getElementById("prevQr"), {
+          text: cardNo,
+          width: 76,
+          height: 76,
+        });
+      }
+
+      async function registerPatient() {
+        try {
+          const body = new URLSearchParams({
+            aadhaar_no: document.getElementById("cAadhaar").value,
+            full_name: document.getElementById("cName").value,
+          });
+          const res = await fetch("backend.php?action=register_beneficiary", {
+            method: "POST",
+            body,
+          });
+          const d = await res.json();
+          if (d.status !== "OK") throw new Error(d.message);
+
+          // 1. Pehle Success Message dikhayein
+          showBanner(
+            `✔ Success! Patient "${d.full_name}" Registered. Virtual Card: ${d.card_no} (Login Last-4: ${d.aadhaar_last4} or ${d.card_last4})`,
+          );
+
+          // 2. Phir Safe Virtual Card render karein
+          showCard(
+            d.card_no,
+            d.full_name,
+            `Virtual Card Last-4: ${d.card_last4} | Rs. 5,00,000 Annual Wallet Active`,
+          );
+        } catch (e) {
+          showBanner(e.message, false);
+        }
+      }
+
+      async function registerProvider() {
+        try {
+          const role = document.getElementById("pRole").value;
+          const body = new URLSearchParams({
+            role_type: role,
+            org_name: document.getElementById("pName").value,
+            parent_hospital_card: document.getElementById("pParentHosp")
+              ? document.getElementById("pParentHosp").value
+              : "",
+            hospital_share_pct: document.getElementById("pHospPct")
+              ? document.getElementById("pHospPct").value
+              : "0",
+            doctor_degrees: document.getElementById("dDegrees")
+              ? document.getElementById("dDegrees").value
+              : "",
+            doctor_aadhaar: document.getElementById("dAadhaar")
+              ? document.getElementById("dAadhaar").value
+              : "",
+            business_pan:
+              role === "DOCTOR"
+                ? document.getElementById("dPan").value
+                : document.getElementById("bPan").value,
+            gst_number: document.getElementById("bGst")
+              ? document.getElementById("bGst").value
+              : "",
+            bank_account_no: document.getElementById("pBank").value,
+            bank_ifsc: document.getElementById("pIfsc").value,
+            new_visit_fee: document.getElementById("pFee")
+              ? document.getElementById("pFee").value
+              : "0",
+            revisit_validity_days: document.getElementById("pRevisit")
+              ? document.getElementById("pRevisit").value
+              : "0",
+            max_patients_per_day: document.getElementById("pMaxDay")
+              ? document.getElementById("pMaxDay").value
+              : "30",
+            mobile_no: document.getElementById("pMobile").value,
+            district: document.getElementById("pDist").value,
+          });
+          const res = await fetch("backend.php?action=register_provider", {
+            method: "POST",
+            body,
+          });
+          const d = await res.json();
+          if (d.status !== "OK") throw new Error(d.message);
+
+          // 1. Pehle Success Message dikhayein
+          showBanner(
+            `✔ Success! ${d.name} (${d.role}) Registered. Virtual Card: ${d.provider_card_no} (Login Last-4: ${d.card_last4}). Approve in govt_portal.html.`,
+          );
+
+          // 2. Phir Safe Virtual Card render karein
+          showCard(
+            d.provider_card_no,
+            d.name,
+            `Role: ${d.role} | Login Last-4: ${d.card_last4} | Pending Govt Verification`,
+          );
+        } catch (e) {
+          showBanner(e.message, false);
+        }
+      }
+
+      toggleProviderFields();
+      loadDummyKyc();
+    </script>
+  </body>
+</html>

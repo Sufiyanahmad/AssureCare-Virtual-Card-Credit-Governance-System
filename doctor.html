@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>NHAS Doctor &amp; Hospital Portal</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="topbar">
+      <div>
+        <strong style="font-size: 17px"
+          >NATIONAL HEALTH ASSURANCE SCHEME (NHAS)</strong
+        ><br />
+        <small style="opacity: 0.85"
+          >AssureCare Virtual Card &amp; Role-Based Immutable Governance
+          System</small
+        >
+      </div>
+      <div style="text-align: right; font-size: 12px">
+        <strong>Aman Kishore</strong> (Enroll: 910/25)<br />
+        Supervisor: Dr. Rajshree | BBAU Lucknow
+      </div>
+    </div>
+    <div class="navbar">
+      <a href="index.html">Login & Registration (KYC Fetch)</a>
+      <a href="doctor.html" class="active">Doctor & Hospital Portal</a>
+    </div>
+
+    <div class="wrap">
+      <div id="msgBox" class="msg-banner"></div>
+
+      <div
+        class="card"
+        style="
+          background: #f8fafc;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          flex-wrap: wrap;
+        "
+      >
+        <div>
+          <strong
+            id="loggedProvTitle"
+            style="font-size: 16px; color: var(--navy)"
+            >Doctor / Hospital Session</strong
+          >
+          <div
+            id="loggedProvMeta"
+            style="font-size: 12.5px; color: #475569"
+          ></div>
+        </div>
+        <div>
+          <select
+            id="docProvSelect"
+            style="width: 320px"
+            onchange="updateProvMeta()"
+          ></select>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <h3 style="margin-top: 0; color: var(--navy)">
+            1. Consultation, Visit/Revisit Check &amp; Digital Prescription
+          </h3>
+          <label
+            >Enter Patient AssureCare Card No. (Auto-Locks Name &amp; Checks
+            Revisit Window)</label
+          >
+          <div style="display: flex; gap: 8px">
+            <input type="text" id="docCard" value="AC-2026-8841-9920" />
+            <button
+              class="btn"
+              style="margin-top: 0"
+              onclick="checkPatientVisit()"
+            >
+              Fetch &amp; Lock
+            </button>
+          </div>
+
+          <label
+            >Patient Name &amp; Status (Strictly Read-Only Aadhaar Lock)</label
+          >
+          <input
+            type="text"
+            id="docLocked"
+            readonly
+            placeholder="Click Fetch & Lock..."
+          />
+
+          <div
+            id="visitStatusBox"
+            style="
+              margin-top: 10px;
+              padding: 10px;
+              background: #eff6ff;
+              border-radius: 8px;
+              font-size: 12.5px;
+              display: none;
+            "
+          ></div>
+
+          <label>Diagnosis Summary</label>
+          <input
+            type="text"
+            id="docDiag"
+            value="Cardiac & Hypertension Review"
+          />
+          <label>Prescribed Diagnostic Lab Tests</label>
+          <input type="text" id="docTests" value="CBC, Lipid Profile, ECG" />
+          <label>Prescribed Medicines</label>
+          <input
+            type="text"
+            id="docMeds"
+            value="Atorvastatin 10mg, Aspirin 75mg"
+          />
+          <label>Next Follow-Up Appointment Date</label>
+          <input type="date" id="docFollow" value="2026-12-05" />
+          <label
+            >Patient Consent OTP (Required if New Visit Fee Applies — Demo:
+            123456)</label
+          >
+          <input type="text" id="docOtp" value="123456" />
+          <button class="btn btn-teal" onclick="createConsultationRx()">
+            Complete Visit &amp; Issue Rx (Auto-Deducts New Visit Fee if Due)
+          </button>
+        </div>
+
+        <div class="card">
+          <h3 style="margin-top: 0; color: var(--teal)">
+            2. Additional Surgery / Inpatient Procedure Billing
+          </h3>
+          <p style="font-size: 12.5px; color: #475569">
+            Use this form for surgeries, ward charges, or procedures beyond
+            standard OPD consultation fee. Payout settles to provider's
+            registered Bank Account.
+          </p>
+          <label>Patient AssureCare Card No.</label>
+          <input type="text" id="bCard" value="AC-2026-8841-9920" />
+          <label>Prescription ID (Rx#)</label>
+          <input type="number" id="bRx" value="1" />
+          <label>Procedure / Surgery Amount (Rs.)</label>
+          <input type="number" id="bAmt" value="5000" />
+          <label>Procedure Description</label>
+          <input
+            type="text"
+            id="bDesc"
+            value="2D Echocardiography & Specialist Procedure"
+          />
+          <label>Patient 6-Digit Consent OTP (Demo: 123456)</label>
+          <input type="text" id="bOtp" value="123456" />
+          <button class="btn" onclick="billProcedure()">
+            Commit Procedure Bill
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let allProvs = [];
+      function showMsg(t, ok = true) {
+        const b = document.getElementById("msgBox");
+        b.className = "msg-banner " + (ok ? "msg-ok" : "msg-err");
+        b.innerText = t;
+        b.style.display = "block";
+      }
+
+      async function initDoctorPortal() {
+        const [sRes, dRes] = await Promise.all([
+          fetch("backend.php?action=get_session"),
+          fetch("backend.php?action=get_system_state"),
+        ]);
+        const sess = await sRes.json();
+        const sys = await dRes.json();
+        allProvs = sys.providers.filter((p) =>
+          ["HOSPITAL", "DOCTOR"].includes(p.role_type),
+        );
+
+        const sel = document.getElementById("docProvSelect");
+        sel.innerHTML = allProvs
+          .map(
+            (p) =>
+              `<option value="${p.provider_id}">${p.org_or_doctor_name} (${p.role_type}) [${p.is_verified == 1 ? "✔ Govt Verified" : "UNVERIFIED"}]</option>`,
+          )
+          .join("");
+
+        if (sess.session && sess.session.provider_id) {
+          sel.value = sess.session.provider_id;
+        }
+        updateProvMeta();
+      }
+
+      function updateProvMeta() {
+        const pid = document.getElementById("docProvSelect").value;
+        const p = allProvs.find((x) => x.provider_id == pid);
+        if (!p) return;
+        document.getElementById("loggedProvTitle").innerText =
+          `${p.org_or_doctor_name} (${p.provider_card_no})`;
+        document.getElementById("loggedProvMeta").innerText =
+          `New Visit Fee: Rs. ${p.new_visit_fee} | Free Revisit Validity: ${p.revisit_validity_days} Days | Max Patients/Day: ${p.max_patients_per_day} | Payout Bank: ${p.bank_account_no} (${p.bank_ifsc})`;
+      }
+
+      async function checkPatientVisit() {
+        try {
+          const card = document.getElementById("docCard").value.trim();
+          const pid = document.getElementById("docProvSelect").value;
+          const res = await fetch(
+            `backend.php?action=lookup_card&card_no=${encodeURIComponent(card)}&provider_id=${pid}`,
+          );
+          const d = await res.json();
+          if (d.status !== "OK") throw new Error(d.message);
+
+          document.getElementById("docLocked").value =
+            `${d.beneficiary.full_name} | ${d.beneficiary.gender} | Status: ${d.beneficiary.account_status}`;
+          document.getElementById("bCard").value =
+            d.beneficiary.assurecare_card_no;
+
+          const v = d.visit_info;
+          const box = document.getElementById("visitStatusBox");
+          box.style.display = "block";
+          box.innerHTML = v.is_free_revisit
+            ? `<strong style="color:var(--success);">✔ FREE REVISIT ACTIVE!</strong> Valid until <strong>${v.valid_until}</strong> (Fee: Rs. 0). Today's Visits: ${v.today_patients} / ${v.max_patients_per_day}.`
+            : `<strong style="color:var(--amber);">NEW VISIT FEE APPLICABLE: Rs. ${v.applicable_fee}</strong> (Covers free revisits for ${v.revisit_days} days till ${v.valid_until}). Today's Visits: ${v.today_patients} / ${v.max_patients_per_day}.`;
+        } catch (e) {
+          showMsg(e.message, false);
+        }
+      }
+
+      async function createConsultationRx() {
+        try {
+          const body = new URLSearchParams({
+            card_no: document.getElementById("docCard").value,
+            provider_id: document.getElementById("docProvSelect").value,
+            diagnosis: document.getElementById("docDiag").value,
+            tests: document.getElementById("docTests").value,
+            medicines: document.getElementById("docMeds").value,
+            followup_date: document.getElementById("docFollow").value,
+            otp: document.getElementById("docOtp").value,
+          });
+          const res = await fetch("backend.php?action=create_rx", {
+            method: "POST",
+            body,
+          });
+          const d = await res.json();
+          if (d.status !== "OK") throw new Error(d.message);
+          document.getElementById("bRx").value = d.rx_id;
+          showMsg(
+            `Visit Completed (${d.visit_type})! Rx ID: #${d.rx_id} | Fee Charged: Rs. ${d.fee_charged} | Revisit Free Till: ${d.valid_until}`,
+          );
+          checkPatientVisit();
+        } catch (e) {
+          showMsg(e.message, false);
+        }
+      }
+
+      async function billProcedure() {
+        try {
+          const body = new URLSearchParams({
+            section_type: "DOCTOR_HOSPITAL",
+            provider_id: document.getElementById("docProvSelect").value,
+            card_no: document.getElementById("bCard").value,
+            rx_id: document.getElementById("bRx").value,
+            amount: document.getElementById("bAmt").value,
+            description: document.getElementById("bDesc").value,
+            otp: document.getElementById("bOtp").value,
+          });
+          const res = await fetch("backend.php?action=process_billing", {
+            method: "POST",
+            body,
+          });
+          const d = await res.json();
+          if (d.status !== "OK") throw new Error(d.message);
+          showMsg(d.message);
+        } catch (e) {
+          showMsg(e.message, false);
+        }
+      }
+
+      initDoctorPortal();
+    </script>
+  </body>
+</html>
